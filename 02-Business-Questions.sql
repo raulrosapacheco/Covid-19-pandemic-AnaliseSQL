@@ -72,7 +72,7 @@ SELECT
     MAX(total_cases) max_total_cases,
 	MAX((total_cases/population))*100 percentage_cases
 FROM pandemic.covid_deaths
-WHERE continent IS NOT NULL
+WHERE continent <> ''
 GROUP BY location
 ORDER BY percentage_cases DESC;
 	
@@ -81,7 +81,7 @@ SELECT
 	location,
     MAX(total_deaths*1) total_deaths # The total_deaths column id of type text, when multiplied by 1 the SGBD will return a numeric value
 FROM pandemic.covid_deaths
-WHERE continent IS NOT NULL
+WHERE continent <> ''
 GROUP BY location
 ORDER BY total_deaths DESC;
 
@@ -89,12 +89,52 @@ ORDER BY total_deaths DESC;
 SELECT location,
 	MAX(CAST(total_deaths AS UNSIGNED)) total_deaths
 FROM pandemic.covid_deaths
-WHERE continent IS NOT NULL
+WHERE continent <> ''
 GROUP BY location
 ORDER BY total_deaths DESC;
+# The CAST function doesn't allow the conversion of type TEXT to INT, however it is possible to convert to type UNSIGNED(INT without sign)
 
+# Which continents have the highest number of deaths?
+SELECT 
+	continent,
+    MAX(CAST(total_deaths AS UNSIGNED)) total_deaths
+FROM pandemic.covid_deaths
+WHERE continent <> ''
+GROUP BY continent
+ORDER BY total_deaths DESC;
 
+# What percentage of deaths per day?
+SELECT 
+	date,
+    (SUM(new_deaths)/SUM(new_cases))*100 percentage_deaths_per_day
+FROM pandemic.covid_deaths
+WHERE continent <> ''
+GROUP BY date
+ORDER BY date;
 
- 
+# In the previous problem, null values were generated when the sum of new_cases was 0.
+# Is it possible to convert NULL values to NA. 
+SELECT 
+	date,
+    COALESCE((SUM(CAST(new_deaths AS UNSIGNED))/SUM(new_cases))*100, 'NA') percentage_deaths_per_day
+FROM pandemic.covid_deaths
+WHERE continent <> ''
+GROUP BY date
+ORDER BY date;
+
+# What is the number of new vaccinees and the moving average of new vaccinees over time by location?
+# Consider only data from South America
+ SELECT 
+	D.continent,
+	D.location,
+    D.date,
+    V.new_vaccinations,
+    AVG(V.new_vaccinations) OVER(PARTITION BY D.location ORDER BY D.date) avg_moving_new_vacciness
+FROM pandemic.covid_deaths D 
+JOIN pandemic.covid_vaccination V 
+ON D.location = V.location AND D.date = V.date
+WHERE D.continent = 'South America'
+ORDER BY 2,3;
+    
  
  
