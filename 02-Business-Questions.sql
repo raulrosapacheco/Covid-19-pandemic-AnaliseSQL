@@ -135,6 +135,55 @@ JOIN pandemic.covid_vaccination V
 ON D.location = V.location AND D.date = V.date
 WHERE D.continent = 'South America'
 ORDER BY 2,3;
+
+# What is the number of new vaccinated and the total of new vaccinated over time per continent?
+# Consider only data from South America
+SELECT 
+	D.continent,
+    D.date,
+    V.new_vaccinations,
+    SUM(CAST(new_vaccinations AS UNSIGNED)) OVER(PARTITION BY continent ORDER BY date) number_vaccinations_over_time
+FROM pandemic.covid_vaccination V 
+JOIN pandemic.covid_deaths D
+ON V.date = D.date AND V.location = D.location
+WHERE D.continent = 'South America'
+ORDER BY 1,2;
+
+# What is the number of new vaccinated and total of new vaccinated over time per continent?
+# Consider only data from South America
+# Consider the date in ther format January/2020
+SELECT 
+	D.continent,
+    DATE_FORMAT(D.date, '%M/%Y') month_year,
+    V.new_vaccinations,
+    SUM(CAST(V.new_vaccinations AS UNSIGNED)) OVER(PARTITION BY D.continent 
+		ORDER BY DATE_FORMAT(D.date, '%M/%Y')) number_vaccinations_over_time
+FROM pandemic.covid_vaccination V 
+JOIN pandemic.covid_deaths D
+ON V.date = D.date AND V.location = D.location
+WHERE D.continent = 'South America'
+ORDER BY 1,2;
+
+# What is the pencentage of the population has at least 1 dose of vaccine over time?
+# Consider only data from Brazil
+# Using Common Table Expressions (CTE)
+# Creat a temporary table
+WITH temp_table (location, date, population, new_vaccinations, total_vaccinations_over_time) AS
+(
+SELECT
+	D.location,
+    D.date,
+    D.population,
+    V.new_vaccinations,
+    SUM(CAST(V.new_vaccinations AS UNSIGNED)) OVER (PARTITION BY D.location 
+		ORDER BY D.date) total_vacinations_over_time
+FROM pandemic.covid_vaccination V 
+JOIN pandemic.covid_deaths D
+ON V.date = D.date AND V.location = D.location
+WHERE D.location = 'Brazil'
+)
+SELECT *, (total_vaccinations_over_time / population)*100 percentage_one_dose FROM temp_table;
+ 
     
  
  
