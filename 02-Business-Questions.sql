@@ -184,6 +184,7 @@ WHERE D.location = 'Brazil'
 )
 SELECT *, (total_vaccinations_over_time / population)*100 percentage_one_dose FROM temp_table;
  
-    
+# During the month de May/2021, did the the percentage of people vaccinated with at least one dose
+#increase or decrease in Brazil?
  
  
